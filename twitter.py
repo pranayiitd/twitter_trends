@@ -60,10 +60,6 @@ def get_followers(uid,type):
 			break
 		limit_remaining = int(response['x-ratelimit-remaining'])
 
-#		print limit_remaining
-		
-		#print followers
-
 	entry = {
 			 "author" : uid,
 			 "followers" : followers,
@@ -88,10 +84,22 @@ def get_user_details(uid,type):
 		api_call = "https://api.twitter.com/1/users/show.json?screen_name="+str(uid)
 	
 	response, data = client.request(api_call)
-	data_json = json.loads(data)
-	#print response
-	#print data
 	return [response,data]
 
+def get_user_details_batch(uids,type):
+	CONSUMER_KEY = "YSXXstxTV3rJFRAmX9HyQ"
+	CONSUMER_SECRET = "96ZZ8qoULMeptOiumnYYPcl2WmzVgPQdNlLeSkGG4yU"
+	ACCESS_KEY = "121059967-SVLSt2qIwLQXPYAKVzZIHquQFHR2g3kkWFrGZeee"
+	ACCESS_SECRET = "zUXxk8EI7tf4nJLtWqxrYbCQ83z0yTm83AYaXrLTyU"
 
+	consumer = oauth.Consumer(key=CONSUMER_KEY, secret=CONSUMER_SECRET)
+	access_token = oauth.Token(key=ACCESS_KEY, secret=ACCESS_SECRET)
+	client = oauth.Client(consumer, access_token)
+	
+	api_call = "https://api.twitter.com/1.1/users/lookup.json?user_id="+str(uids)
+	if(type==1):
+		api_call = "https://api.twitter.com/1.1/users/lookup.json?screen_name="+str(uids)
+	
+	response, data = client.request(api_call)
+	return [response,data]
 
