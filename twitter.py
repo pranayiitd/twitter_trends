@@ -1,5 +1,4 @@
 import json
-# import urllib3
 import oauth2 as oauth
 import pprint
 
@@ -13,8 +12,10 @@ def get_uid(tweet):
 
 def get_tweetid(tweet):
 	return tweet['id']
-	
+
+# extracts the user_details in the tweet json object.
 def get_author_details(tweet):
+	# Will have to change as per yahoo format
 	uid = tweet['user']['id']
 	verified = tweet['user']['verified']
 	followers_count = tweet['user']['followers_count']
@@ -27,14 +28,8 @@ def get_author_details(tweet):
 	
 	return tweet['user']
 
+# Make call to twitter API version to get all followers of user with uid
 def get_followers(uid,type,version,client):
-	# CONSUMER_KEY = "YSXXstxTV3rJFRAmX9HyQ"
-	# CONSUMER_SECRET = "96ZZ8qoULMeptOiumnYYPcl2WmzVgPQdNlLeSkGG4yU"
-	# ACCESS_KEY = "121059967-SVLSt2qIwLQXPYAKVzZIHquQFHR2g3kkWFrGZeee"
-	# ACCESS_SECRET = "zUXxk8EI7tf4nJLtWqxrYbCQ83z0yTm83AYaXrLTyU"
-
-	
-	
 
 	cursor = '-1'
 	limit_remaining = 4
@@ -68,20 +63,12 @@ def get_followers(uid,type,version,client):
 			 "followers" : followers,
 			 "response"	 : response
 			 }	
-
-	
 	return entry
 
 
-
+# Batch request to Twitter API version to get details of all users in uids
 def get_user_details_batch(uids,type,version,client):
 
-	# CONSUMER_KEY = "YSXXstxTV3rJFRAmX9HyQ"
-	# CONSUMER_SECRET = "96ZZ8qoULMeptOiumnYYPcl2WmzVgPQdNlLeSkGG4yU"
-	# ACCESS_KEY = "121059967-SVLSt2qIwLQXPYAKVzZIHquQFHR2g3kkWFrGZeee"
-	# ACCESS_SECRET = "zUXxk8EI7tf4nJLtWqxrYbCQ83z0yTm83AYaXrLTyU"
-
-	
 	api_call = "https://api.twitter.com/"+str(version)+"/users/lookup.json?user_id="+str(uids)
 	if(type==1):
 		api_call = "https://api.twitter.com/"+str(version)+"/users/lookup.json?screen_name="+str(uids)
@@ -90,8 +77,6 @@ def get_user_details_batch(uids,type,version,client):
 
 	response, data = client.request(api_call)
 	return [response,data]
-
-
 
 
 def get_user_details(uid,type):

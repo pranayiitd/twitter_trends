@@ -1,3 +1,10 @@
+"
+Author :Pranay Agarwal
+email  :agarwalpranaya@gmail.com
+"
+
 extract.py  : Connect to the timesense, fetch tweets and extract/calculate features
 twitter.py  : Interface to make query via TwiterAPI to get user details and followers info
-graphDB.py  : Interface to connect to neo4j to store and access social graph.
+graphDB.py  : Interface to connect to neo4j to store and access social graph
+collections.py : To collect and dump the twitter response in text file.
+.
