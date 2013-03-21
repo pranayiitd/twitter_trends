@@ -1,14 +1,17 @@
 import json
 
 def count_followers():
-	f = open("../resource/followers_dump.txt","r")
+	f = open("../resource/y_followers_dump.txt","r")
 	line = f.readline()
 	followers_count =0
+	followers =[]
 	while line:
 		entry = json.loads(line)
-		count = len(entry['followers'])
-		followers_count+=count
+		followers = followers+entry['followers']
+		# count = len(set(entry['followers']))
+		# followers_count+=count
+		# print len(entry['followers'])
 		line =f.readline()
-	return followers_count
+	return len(set(followers))
 
 print "The number of followers ids :",count_followers()	
