@@ -5,31 +5,45 @@ import time
 from datetime import datetime
 import sys
 
-def find_start(followers_dump, raw_tweet):
-	ff = open(followers_dump,"r")
+def find_start(dest, source, typ):
+	followers_dump = dest
+	raw_tweet = source
+
+	ff = open(dest,"r")
 	flines = ff.readlines()
-	last_tid=""
+	last_id=""
+	
 	n =len(flines)
 	for i in range(n):
 		entry = json.loads(flines[n-i-1])
-		if(len(entry['followers'])!=0):
-			last_tid = entry['tweet_id']
+		# Last non-empty response in the destination dumping file
+		if(len(entry[typ])!=0):
+			if(typ=="users"):
+				last_id = entry['user_id']
+			elif(typ=="followers"):
+				last_id = entry['tweet_id']
 			break
 	ff.close()
-	fr = open(raw_tweet,"r")
+
+	# Fiding line number in the source file containing the last_tid
+	fr = open(source,"r")
 	line = fr.readline()
-	count =0
-	start_line=0
+	count =0;start_line=0
 	while line:
 		count+=1
-		tweet = json.loads(line)
-		if(tweet['rtds_tweet']['id']==last_tid):
+		entry = json.loads(line)
+		_id =0
+		if(typ=="followers"):
+			_id = entry['rtds_tweet']['id']
+		elif(typ=="users"):
+			_id = entry[0]
+		
+		if(_id==last_id):
 			start_line = count
 			break
 		line = fr.readline()
 	
 	fr.close()
-	# print start_line
 	return start_line
 
 # COLLECTS AUTHOR DETAILS FROM THE TWEET
@@ -83,18 +97,18 @@ def collect_followers(version, app, dump_path):
 	flog = open(log_details,"a")
 	fdump = open(followers_dump,"a")
 	fauth = open(author_dump,"a")
-# ----------------------------------
+	# ----------------------------------
 	# Skipping the lines to start from right place.
 	start_from = find_start(followers_dump, raw_tweet)
 	line=""
 	for i in range(start_from):
 		line = fraw.readline()
-# ----------------------------------
+	# ----------------------------------
 	
 	starttime = datetime.now() 
 	endtime =""
 	endtweet=""
-	
+
 	print "starting from the line number :",start_from
 	count =1;limit =0;ret =0
 	
@@ -110,6 +124,8 @@ def collect_followers(version, app, dump_path):
 		
 		#GETTING FOLLOWERS FROM TWITTER by user_id
 		entry = twitter.get_followers(uid,0,version,client)
+		
+		
 		
 		if(version==1):
 			limit = int(entry['response']['x-ratelimit-remaining'])
@@ -141,33 +157,94 @@ def collect_followers(version, app, dump_path):
 	if(limit >=3):
 		ret =2
 		endtime = datetime.now()
-	flog.write(raw_tweet+"\t"+str(starttime)+"\t"+str(endtime)+"\t"+endtweet+"\t"+str(ret)+"\t"+str(count)+"\n")
+	flog.write(raw_tweet+"\t"+str(starttime)+"\t"+str(endtime)+"\t"+str(endtweet)+"\t"+str(ret)+"\t"+str(count)+"\n")
 	flog.close()
 	return [ret, limit]
 
 # COLLECTS THE USERS DETAILS FROM TWITER API AND DUMPS IN A FILE
-def collect_users_details(version, app, users_dump, followers_dump):
+def collect_users_details(version, app, dump_path):
 
 	CONSUMER_KEY = app['c_key']
 	CONSUMER_SECRET = app['c_sec']
 	ACCESS_KEY = app['a_key']
 	ACCESS_SECRET = app['a_sec']
-
 	consumer = oauth.Consumer(key=CONSUMER_KEY, secret=CONSUMER_SECRET)
 	access_token = oauth.Token(key=ACCESS_KEY, secret=ACCESS_SECRET)
 	client = oauth.Client(consumer, access_token)
 
-	udump = open(users_dump,"w")
-	fdump = open(followers_dump,"r")
+	followers_dump = dump_path["followers_dump"]
+
+	uids_dump = dump_path["uids_dump"]
+	users_dump = dump_path["users_dump"]
+	log_details = dump_path["log_dump"]
+	
+	
+	fdump = open(uids_dump,"r")
+	udump = open(users_dump,"a")
+	flog  = open(log_details,"a")
+	# ----------------------------------
+	# Skipping the lines to start from right place.
+	start_from = find_start(users_dump, uids_dump, "users")
+	line=""
+	for i in range(start_from):
+		line = fdump.readline()
+	# ----------------------------------
+	
+	starttime = datetime.now() 
+	endtime =""
+	
+	enduid=""
+
+	print "starting from the line number :",start_from
+	count =1;limit =0;ret =0
 	line = fdump.readline()
 	
 	while line:
-		entry = json.loads(line)
-		response,data = twitter.get_user_details_batch(entry['followers'],0,version,client)
-		udump.write(json.dumps(response)+"\n")
-		udump.write(json.dumps(json.loads(data))+"\n")
-		break
+		count+=1
+		entry_followers = json.loads(line)
+	
+		uid = entry_followers[0]
+		enduid = uid
+
+
+		# GETTING USERS DETAILS FORM TWITTER API
+		entry_users = twitter.get_user_details_batch(entry_followers, 0, version, client)
+		# print len(entry_followers['followers'])
+		if(entry_users['response']['status']!="200"):
+			break
+		###############
+		if(version==1):
+			# pprint.pprint(entry_users['response'])
+			limit = int(entry_users['response']['x-ratelimit-remaining'])
+		else:
+			limit = int(entry_users['response']['x-rate-limit-remaining'])
+
+		sys.stdout.write("\rlimit x-ratelimit-remaining: %d The request number : %d" %(limit,count))
+		sys.stdout.flush()
+
+		if(limit<3):
+			endtime = datetime.now()
+			ret =1
+			print "limit reached\n"
+			break
+
+		# Dumping user_details
+		entry_users["user_id"] = uid
+		udump.write(json.dumps(entry_users)+"\n")	
+		#new line 
 		line = fdump.readline()
+		
+	
+	fdump.close()
+	udump.close()
+
+	if(limit >=3):
+		ret =2
+		endtime = datetime.now()
+	flog.write(uids_dump+"\t"+str(starttime)+"\t"+str(endtime)+"\t"+str(enduid)+"\t"+str(ret)+"\t"+str(count)+"\n")
+	flog.close()
+	return [ret, limit]
+
 
 # START SCHEDULING THE COLLECTION 
 def start_scheduling(dump_path):
@@ -190,7 +267,8 @@ def start_scheduling(dump_path):
 	
 	while(True):
 		print "trying version ,app number \n",v,i
-		ret, limit = collect_followers(v,set_app[i],dump_path)
+		# ret, limit = collect_followers(v,set_app[i],dump_path)
+		ret, limit = collect_users_details(v,set_app[i],dump_path)
 		break
 		# ret, limit = collect_users_details(v,set_app[i])
 		# The job is completed
@@ -216,7 +294,17 @@ def start_scheduling(dump_path):
 					# break
 
 def testing():
+	users_dump = "../resource/y_users_details_dump.txt"
+	f = open(users_dump,"r")
+	line = f.readline()
+	entry = json.loads(line)
+	print int(entry['response']['x-ratelimit-remaining'])
+	pprint.pprint(entry['response']['x-ratelimit-remaining'])
+	print len(json.loads(entry['users']))
+
 	
+	return
+
 	rtds = open("../tweets_dump/sf03_twitter.8432.log_1363570500","r")
 	line = rtds.readline()
 	tweet = json.loads(line)
@@ -246,11 +334,23 @@ raw_tweet  = "../tweets_dump/sf03_twitter.8432.log_1363570500"
 followers_dump = "../resource/y_followers_dump.txt"
 users_dump = "../resource/y_users_details_dump.txt"
 authors_dump = "../resource/y_authors_details_dump.txt"
-log_dump = "../resource/y_log.txt"
+# log_dump = "../resource/y_log.txt"
+log_dump = "../resource/y_log_users.txt"
+uids_dump ="../resource/uids_dump.txt"
 
 dump_path =[raw_tweet, followers_dump, authors_dump, users_dump, log_dump ] 
 
-# find_start(followers_dump, raw_tweet)
+dump_path ={
+			"raw_tweet" : raw_tweet,
+			"followers_dump":followers_dump,
+			"authors_dump" : authors_dump,
+			"users_dump" : users_dump,
+			"log_dump" : log_dump,
+			"uids_dump": uids_dump	
+}
+
+# print find_start(followers_dump, raw_tweet,"followers")
+# print find_start(users_dump, uids_dump, "users")
 # testing()
 start_scheduling(dump_path)
 # collect_users_details(dump_path)

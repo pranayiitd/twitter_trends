@@ -63,7 +63,12 @@ def get_user_details_batch(uids,type,version,client):
 		api_call = "https://api.twitter.com/"+str(version)+"/users/lookup.json?screen_name="+str(uids)
 
 	response, data = client.request(api_call)
-	return [response,data]
+	entry = {
+			"users"   : data,
+			"response" : response 
+			}
+	return entry
+
 
 
 
