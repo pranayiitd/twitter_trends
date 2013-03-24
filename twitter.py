@@ -56,7 +56,7 @@ def get_followers(uid,type,version,client):
 
 
 # Batch request to Twitter API version to get details of all users in uids
-def get_user_details_batch(uids,type,version,client):
+def get_user_details_batch(uids, type, version, client):
 
 	api_call = "https://api.twitter.com/"+str(version)+"/users/lookup.json?user_id="+str(uids)
 	if(type==1):
@@ -69,16 +69,36 @@ def get_user_details_batch(uids,type,version,client):
 			}
 	return entry
 
-
-
-
 # Request to Twitter API get details of one user
-
-def get_user_details(uids,type,version,client):
-	
+def get_user_details(uid,type,version,client):
 	api_call = "https://api.twitter.com/"+str(version)+"/users/show.json?user_id="+str(uid)
 	if(type==1):
 		api_call = "https://api.twitter.com/"+str(version)+"/users/show.json?screen_name="+str(uid)
 	
+	response, data = client.request(api_call,force_auth_header=True)
+	entry = {
+			"user"   : data,
+			"response" : response 
+			}
+	return entry
+
+# Request to twitter to get top 10 trending topics in location
+def get_trending_topics(location, version, client):
+	api_call ="https://api.twitter.com/"+str(version)+"/trends/place.json?id="+str(location)
 	response, data = client.request(api_call)
-	return [response,data]
+	entry = {
+			"trends"   : data,
+			"response" : response 
+			}
+	return entry
+
+def get_trending_tweets(query, version, client):
+
+	
+	api_call ="https://api.twitter.com/"+str(version)+"/search/tweets.json?q="+str(query)
+	response, data = client.request(api_call)
+	entry = {
+			"tweets"   : data,
+			"response" : response 
+			}
+	return entry
