@@ -46,121 +46,6 @@ def find_start(dest, source, typ):
 	fr.close()
 	return start_line
 
-# COLLECTS AUTHOR DETAILS FROM THE TWEET
-def get_author_details(tweet, format, author_dump):
-	# Will have to change as per yahoo format
-
-	if(format=="yahoo"):
-		time_zone =""
-		
-		if(tweet['rtds_tweet'].has_key('user_time_zone')):
-			time_zone = tweet['rtds_tweet']['user_time_zone']
-		
-		author_details ={
-				"user_id" : tweet['rtds_tweet']['user_id'],
-				"user_created_at" : tweet['rtds_tweet']['user_created_at'],
-				"user_followers_count" :tweet['rtds_tweet']['user_followers_count'],
-				"user_friends_count"  :tweet['rtds_tweet']['user_friends_count'],
-				"user_lang" : tweet['rtds_tweet']['user_lang'],
-				"user_location" : tweet['rtds_tweet']	['user_location'], 
-				"user_name" : tweet['rtds_tweet']['user_name'],
-				"user_profile_image_url" :tweet['rtds_tweet']['user_profile_image_url'],
-				"user_protected"  : tweet['rtds_tweet']['user_protected'] ,
-				"user_screen_name" :tweet['rtds_tweet']['user_screen_name'],
-				"user_statuses_count" :tweet['rtds_tweet']['user_statuses_count'],
-				"user_time_zone" :time_zone,
-				"user_utc_offset" :tweet['rtds_tweet']['user_utc_offset'],
-				"user_verified"  :tweet['rtds_tweet']['user_verified'],
-			}
-		return author_details
-		
-	else:
-		return tweet['user']
-
-# COLLECTS THE FOLLOWERS OF THE AUTHOR 
-def collect_followers(version, app, dump_path):
-
-	CONSUMER_KEY = app['c_key']
-	CONSUMER_SECRET = app['c_sec']
-	ACCESS_KEY = app['a_key']
-	ACCESS_SECRET = app['a_sec']
-	consumer = oauth.Consumer(key=CONSUMER_KEY, secret=CONSUMER_SECRET)
-	access_token = oauth.Token(key=ACCESS_KEY, secret=ACCESS_SECRET)
-	client = oauth.Client(consumer, access_token)
-
-	raw_tweet = dump_path[0]
-	followers_dump = dump_path[1]
-	author_dump = dump_path[2]
-	log_details = dump_path[4]
-	
-	fraw = open(raw_tweet,"r")
-	flog = open(log_details,"a")
-	fdump = open(followers_dump,"a")
-	fauth = open(author_dump,"a")
-	# ----------------------------------
-	# Skipping the lines to start from right place.
-	start_from = find_start(followers_dump, raw_tweet)
-	line=""
-	for i in range(start_from):
-		line = fraw.readline()
-	# ----------------------------------
-	
-	starttime = datetime.now() 
-	endtime =""
-	endtweet=""
-
-	print "starting from the line number :",start_from
-	count =1;limit =0;ret =0
-	
-	line = fraw.readline()
-	while line:
-		count+=1 
-		tweet = json.loads(line)
-		uid = twitter.get_uid(tweet,"yahoo")
-		tid = twitter.get_tweetid(tweet,"yahoo")
-		endtweet = tid
-		author_details = get_author_details(tweet,"yahoo", author_dump)
-		
-		
-		#GETTING FOLLOWERS FROM TWITTER by user_id
-		entry = twitter.get_followers(uid,0,version,client)
-		
-		
-		
-		if(version==1):
-			limit = int(entry['response']['x-ratelimit-remaining'])
-		else:
-			limit = int(entry['response']['x-rate-limit-remaining'])
-
-		sys.stdout.write("\rlimit x-ratelimit-remaining: %d The request number : %d" %(limit,count))
-		sys.stdout.flush()
-
-		if(limit<3):
-			endtime = datetime.now()
-			ret =1
-			print "limit reached\n"
-			break
-
-		# Dumping followers ids and author_details
-		entry["tweet_id"] = tid
-		fdump.write(json.dumps(entry)+"\n")	
-		fauth.write(json.dumps(author_details)+"\n")
-		
-		#new line 
-		line = fraw.readline()
-
-	
-	fraw.close()
-	fdump.close()
-	fauth.close()
-
-	if(limit >=3):
-		ret =2
-		endtime = datetime.now()
-	flog.write(raw_tweet+"\t"+str(starttime)+"\t"+str(endtime)+"\t"+str(endtweet)+"\t"+str(ret)+"\t"+str(count)+"\n")
-	flog.close()
-	return [ret, limit]
-
 # COLLECTS THE USERS DETAILS FROM TWITER API AND DUMPS IN A FILE
 def collect_users_details(version, app, dump_path):
 
@@ -182,14 +67,12 @@ def collect_users_details(version, app, dump_path):
 	fdump = open(uids_dump,"r")
 	udump = open(users_dump,"a")
 	flog  = open(log_details,"a")
-	# ----------------------------------
+
 	# Skipping the lines to start from right place.
 	start_from = find_start(users_dump, uids_dump, "users")
 	line=""
 	for i in range(start_from):
 		line = fdump.readline()
-	# ----------------------------------
-	
 	starttime = datetime.now() 
 	endtime =""
 	

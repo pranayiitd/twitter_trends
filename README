@@ -15,8 +15,12 @@ socks.py        : requred script just include in the same dir.
 SCRIPT COLLECTING DATA
 
 extract.py  : Connect to the timesense, fetch tweets and extract/calculate features
-twitter.py  : Interface to make query via TwiterAPI to get user details and followers info
 graphDB.py  : Interface to connect to neo4j to store and access social graph
-collections.py : To collect and dump the twitter response in text file.
-.
+
+twitter.py  : Interface to make query via TwiterAPI to get user details and followers info
+
+collections.py : Given tweets dump extract author details and gets its followers.
+collections_trends.py  : collects trending topics every 5 mins and the relevant popular tweets as well.
+collections_users.py  : given follower_uids(unique) dump gets profiles for all of them.
+
 
