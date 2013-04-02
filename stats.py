@@ -2,8 +2,21 @@ import json
 import sys
 import os
 
+paths = {	"filtered_tweets" :"../tweets_dump",
+			"sampled_tweets" :"../sample_dump/2013-03-29",
+			"graph" : "../graph/2013-03-29",
+			"users_db"   : "../graph/users_db.txt",
+
+			"sampling_log" : "../graph/sampling_log.txt",
+			"authors_log" :"../graph/authors_log.txt",
+			"followers_log" : "../graph/followers_log.txt",
+			"profiles_log" : "../graph/profiles_log.txt",
+			
+			}
+
+
 def count_followers():
-	f = open("../resource/y_users_details_dump.txt","r")
+	f = open(paths["graph"]+"/followers.txt","r")
 	line = f.readline()
 	followers_count =0
 	followers =[]
@@ -16,10 +29,9 @@ def count_followers():
 		line =f.readline()
 	return len(set(followers))
 
-# print "The number of followers ids :",count_followers()	
 
 def count_users():
-	f = open("../resource/y_users_details_dump.txt","r")
+	f = open(paths["paths"]+"/profiles.txt","r")
 	line = f.readline()
 	users_count =0
 	users =[]
@@ -60,9 +72,9 @@ def count_trending_tweets():
 cmd = sys.argv[1]
 
 if(cmd=="u"):
-	print count_users()
+	print "Number of profiles collected ",count_users()
 elif (cmd=="f"):
-	print count_followers()
+	print "Number of followers ids ",count_followers()
 elif (cmd=="ua"):
 	print count_uids()
 elif (cmd=="tt"):	

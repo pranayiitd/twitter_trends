@@ -165,11 +165,8 @@ def collect_followers(version, app, dump_path):
 
 # START SCHEDULING THE COLLECTION 
 def start_scheduling(dump_path):
-	
-
 	i =0;v =1;time_elapsed =0
 	twitter.get_user_details("swamy39",1,1,)
-
 	while(True):
 		print "trying version ,app number \n",v,i
 		# ret, limit = collect_followers(v,set_app[i],dump_path)
