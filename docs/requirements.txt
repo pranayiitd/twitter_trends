@@ -1,0 +1,27 @@
+
+"
+Author :Pranay Agarwal
+email  :agarwalpranaya@gmail.com
+"
+-----------------------------------------------------------------------------------
+REQUIREMENTS
+    simplejson or json library
+    oauth2 : http://github.com/simplegeo/python-oauth2
+             Can be installed from above package setup.py script.
+twitter_app.txt : contains credentials for the Twitter Applications used.
+socks.py        : requred script just include in the same dir.
+
+
+-----------------------------------------------------------------------------------
+SCRIPT COLLECTING DATA
+
+extract.py  : Connect to the timesense, fetch tweets and extract/calculate features
+graphDB.py  : Interface to connect to neo4j to store and access social graph
+
+twitter.py  : Interface to make query via TwiterAPI to get user details and followers info
+
+collections.py : Given tweets dump extract author details and gets its followers.
+collections_trends.py  : collects trending topics every 5 mins and the relevant popular tweets as well.
+collections_users.py  : given follower_uids(unique) dump gets profiles for all of them.
+
+
